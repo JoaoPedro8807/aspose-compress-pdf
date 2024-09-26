@@ -2,121 +2,150 @@ import aspose.words as aw
 from typing import Any
 import os
 from pathlib import Path
-from collections import defaultdict
-
-class ValidationData:
-    def __init__(self) -> None:
-        self.errors = defaultdict(list)
-
-    def validate_data(self):
-        #self.validation_quality()
-        ...
-        
-    def validation_quality(self, quality: int):
-        if quality not in range(1, 100):
-            raise ValueError('A qualidade precisa estar entre 1 e 100')
+from compress import Compress
+from validation_data import ValidationData
 
 
-class PDFCompression(ValidationData):
+class PDFCompression(ValidationData, Compress):
     def __init__(self, pdf_dir:str = '') -> None:
-        self.pdf_dir = pdf_dir
+        self.pdf_dir: Path = Path(pdf_dir) if pdf_dir else Path()
+        self.builder = aw.DocumentBuilder()
+        self.files_to_process: list[Path] = []
         
+    def __str__(self) -> str:
+        return  f'PDFCompression work with directory {self.pdf_dir}'
+
+    @property
+    def files(self):
+        return self.files_to_process
     
-        
-    def set_pdf_page_size(self, page_setup: Any, width: int, height: int) -> None:
-        page_setup.page_width = width
-        page_setup.page_height = height
+    @files.setter
+    def files(self, files: list[Path]):
+        self.files_to_process = files
 
 
     def build(self,
             file: str, 
             quality: int, 
-            max_widht: int = 1500, 
+            name: str = '',
+            dir_to_save: Path | str = '',
+            max_width: int = 1500, 
             max_heigth: int = 1500,
-            save_with: str = ''
-            ) -> None:                                                                                          
-        self.compact(
-            file=file, 
-            max_width=max_widht, 
-            max_height=max_heigth, 
+            ) -> Any:    
+        """" 
+        Build a compact PDF file.
+
+    Parameters:
+        file (str, required): The path to the PDF file to compress.
+        quality (int, required): The quality level for the compression (0-100).
+        name (str, optional): The name of the output file (without extension).
+        dir_to_save (Path, or, required): The directory where the output file will be saved.
+        max_width (int, optional): The maximum width for the output PDF pages. Default is 1500.
+        max_height (int, optional): The maximum height for the output PDF pages. Default is 1500.
+
+        """
+                     
+        self.files_to_process = [file]                                         
+
+        self.init_validate( 
             quality=quality, 
-            save_with=save_with)
+            max_width=max_width, 
+            max_heigth=max_heigth
+        )    
+
+        stream = self.compact(
+            file=file, 
+            max_width=max_width, 
+            max_height=max_heigth, 
+            quality=quality
+            )
+        self.save(stream, name, dir_to_save)
 
     def build_all(self, 
-            files_dir: str | list[str], 
+            files_dir: Path | str, 
             quality_per_image: int, 
-            max_widht: int = 1500, 
+            dir_to_save: Path | str = '',
+            name: str = '',
+            max_width: int = 1500, 
             max_heigth: int = 1500) -> None:
-        
-        files = os.listdir(self.pdf_dir)
-        if isinstance(files_dir, list):
-            files = [os.listdir(f) for f in files_dir]
-        
-        for file in files:
-            original_pdf = os.path.join(self.pdf_dir, file)
-            self.compact(
-                file=original_pdf,
+        """ 
+            Build all pdfs files (only pdf files) at the path
+
+        Parameters:
+        file_dir (Path or str, required): The path to the PDFs files to compress.
+        quality_per_image (int, required): The quality level for the compression (0-100).
+        name (str, optional): The name of the output file,  will be save with the int increment in the end of name ex: (teste-1.pdf)
+        dir_to_save (Path, or, required): The directory where the output file will be saved.
+        max_width (int, optional): The maximum width for the output PDF pages. Default is 1500.
+        max_height (int, optional): The maximum height for the output PDF pages. Default is 1500.
+
+        """
+
+        if isinstance(files_dir, str):
+            files_dir = Path(files_dir)
+
+        #get only pdfs files
+        self.files_to_process = [file for file in files_dir.iterdir() if file.is_file() and file.suffix == '.pdf']
+
+        self.init_validate(
+            quality=quality_per_image, 
+            max_width=max_width, 
+            max_heigth=max_heigth
+        )
+
+        for i, file in enumerate(self.files_to_process):
+            if name: #if name does not exist, will be save with older name
+                name = f'{name}-{i}'
+            stream = self.compact(
+                file=file,
                 max_height=max_heigth,
-                max_width=max_widht,
+                max_width=max_width,
                 quality=quality_per_image
             )
+            self.save(file=stream, name=name, path=dir_to_save)
             
+    def init_validate(self, *args, **kwargs) -> None:
+        self.validate_data(*args, **kwargs)
 
-    def compact(self,  
-                file: str, 
-                save_with: str = '', 
-                max_width: int = 1500, 
-                max_height: int = 1500, 
-                quality: int = 50):
-        
-        """ build the compact pdf, with quality param """
-        self.validate_data()
-        self.validation_quality(quality=quality)
-        
-        pdf_read_options = aw.pdf2word.fixedformats.PdfFixedOptions()
-        pdf_read_options.image_format = aw.pdf2word.fixedformats.FixedImageFormat.JPEG
-        pdf_read_options.jpeg_quality = quality
-        
-        renderer = aw.pdf2word.fixedformats.PdfFixedRenderer()
-
-        with open(file, 'rb') as pdf_stream:
-                aspose_image = renderer.save_pdf_as_images(pdf_stream, pdf_read_options);
-
-        builder = aw.DocumentBuilder()
-        for i in range(0, len(aspose_image)):
-            page_setup = builder.page_setup
-            self.set_pdf_page_size(page_setup, max_width, max_height) #set the image size in current page
-
-            page_image = builder.insert_image(aspose_image[i])
-
-            self.set_pdf_page_size(page_setup, page_image.width, page_image.height) 
-            page_setup.top_margin = 0
-            page_setup.left_margin = 0
-            page_setup.bottom_margin = 0
-            page_setup.right_margin = 0
-
-            if i != len(aspose_image) - 1:
-                builder.insert_break(aw.BreakType.SECTION_BREAK_NEW_PAGE)
-
-        save_options = aw.saving.PdfSaveOptions()
-        save_options.cache_background_graphics = True
-        if save_with:
-            name = save_with.replace('.pdf', '') #make sure that have a .pdf
-            builder.document.save(f'{name}.pdf', save_options)
+    def __repr__(self) -> str:
+        return f'PDFCompression(pdf_dir={self.pdf_dir})'
+    
+    def __len__(self) -> int:
+        return len(self.files_to_process)
+    
+    def __enter__(self):
+        print(f'Iniciando a compressão do diretório {self.pdf_dir}')
+        return self
+    
+    def __exit__(self, exec_type, exec_value, traceback):
+        if exec_type:
+            print(f'error: {exec_value}')
         else:
-            builder.document.save(pdf_stream.name, save_options)
+            print(f'Compressãoc concluida com sucesso, {len(self.files_to_process)} de arquivos processados')    
 
 
 my_path = Path(__file__).parent.joinpath('pdfs')
 
-pdf_builder = PDFCompression(pdf_dir=my_path)
-pdf_builder.build(
-    file=my_path / 'teste0.pdf',
-    quality=30,
-    max_heigth=1500,
-    max_widht=1500,
-    save_with='testando.pdf'
+# pdf_builder = PDFCompression()
+# doc = pdf_builder.build(
+#     file=my_path / ''teste0.pdf'',
+#     quality=30,
+#     max_heigth=1500,
+#     max_width=1500)
+#print('DOC: ', doc)
+
+with PDFCompression() as compressor:
+    print(compressor)
+    compressor.build_all(
+        files_dir=my_path,
+        name='teste-all',
+        dir_to_save= my_path.parent / 'teste',
+        quality_per_image=30,
+        max_heigth=1500,
+        max_width=1500
     )
+
+
 
 
 
