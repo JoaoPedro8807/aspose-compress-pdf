@@ -38,7 +38,7 @@ from .main import PDFCompression
 from pathlib import Path
 
 my_path = Path(__file__).parent.joinpath('pdfs')
-my_file = my_path / 'pdf-generico.pdf'
+my_file = my_path / 'pdf-teste.pdf'
 
 with PDFCompression() as compressor:
     compressor.build(  #make compress with params
