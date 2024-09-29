@@ -3,6 +3,7 @@ from typing import Any
 import os
 from pathlib import Path
 from collections import defaultdict
+import io
 
 class Compress:
     def __init__(self, *args, **kwargs) -> None:
@@ -29,7 +30,7 @@ class Compress:
         pdf_read_options.jpeg_quality = quality
         
         renderer = aw.pdf2word.fixedformats.PdfFixedRenderer()
-
+        print('Compactando: ', file.name, '....')
         with open(file, 'rb') as pdf_stream:
                 aspose_image = renderer.save_pdf_as_images(pdf_stream, pdf_read_options)
 
@@ -47,28 +48,10 @@ class Compress:
 
             if i != len(aspose_image) - 1: # break increment in the last page 
                 self.builder.insert_break(aw.BreakType.SECTION_BREAK_NEW_PAGE)
-
-            #self.save(file=pdf_stream, name=kwargs.get('name'))
+        
         return self.builder.document
     
-    def save(self, 
-             file: Any,
-             name: str = '', 
-             path: Path | str = '',
-             *args,
-             **kwargs
-            ) -> None:
-        
-        save_options = aw.saving.PdfSaveOptions()
-        save_options.cache_background_graphics = True
 
-        if path and isinstance(path, str):
-            path = Path(path)
 
-        name = name or file.name
-        if not name.endswith('.pdf'): 
-            name += '.pdf'  # make sure the file will save .pdf
-        save = path / name
-        self.builder.document.save(str(save), save_options)
 
         

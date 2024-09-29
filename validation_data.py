@@ -4,7 +4,6 @@ class ValidationData:
     def __init__(self, *args, **kwargs) -> None:
         ...
 
-
     def validate_data(self, *args, **kwargs) -> None:
         self.data = kwargs
         self.errors = []
@@ -13,14 +12,11 @@ class ValidationData:
         self.validate_quality()
         if self.errors:
             raise ValueError(f"Erros de validação: {self.errors}")
-        
 
     def validate_file(self):
         """ check all files existing """
         files = self.files_to_process
-        print('ALL FILES: ', files)
         for file in files:
-            print('FILLE: ', file)
             if not Path(file).is_file():
                 self.errors.append(f"O arquivo {file} não existe.")
 
