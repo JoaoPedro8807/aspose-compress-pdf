@@ -14,7 +14,7 @@ Este repositório contém um projeto para compressão de arquivos PDF, visando r
 - Bibliotecas:
   - `Aspose` Manipulação de páginas e imagens do pdf.
 
-   - `Aspose` Testes funcionais com pytest.
+   - `Pytest` Testes funcionais com pytest.
 
 ## Pré-requisitos
 
