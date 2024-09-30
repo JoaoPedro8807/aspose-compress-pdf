@@ -1,7 +1,7 @@
 # Projeto de Compressão de PDF
 
 Projeto para compressão de arquivos PDF, visando reduzir o tamanho dos arquivos sem comprometer a qualidade do conteúdo. O objetivo é comprimir de maneira profunda, rápida e gratuita.
-Muitos compressores não conseguem comprimir arquivos pequenos para menos de 100/200 kbs, e os que conseguem são pagos, então resolvi fazer esse projeto utilizando Aspose
+Muitos compressores não conseguem comprimir arquivos pequenos para menos de 100/200 kbs, e os que conseguem, são pagos. Então resolvi fazer esse projeto utilizando Aspose
 
 ## Funcionalidades
 
