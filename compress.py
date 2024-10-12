@@ -2,15 +2,14 @@ import aspose.words as aw
 from typing import Any
 import os
 from pathlib import Path
-from collections import defaultdict
 import io
 
 class Compress:
     def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
         ...
 
     def set_pdf_page_size(self, page_setup: Any, width: int, height: int) -> None:
+        """ set size for any image in PDF """
         page_setup.page_width = width
         page_setup.page_height = height
 
@@ -23,7 +22,7 @@ class Compress:
                 **kwargs
                 ) -> Any:
         
-        """ build the compact pdf, with quality param """
+        """ build the compact pdf, with quality params """
         
         pdf_read_options = aw.pdf2word.fixedformats.PdfFixedOptions()
         pdf_read_options.image_format = aw.pdf2word.fixedformats.FixedImageFormat.JPEG
@@ -31,16 +30,17 @@ class Compress:
         
         renderer = aw.pdf2word.fixedformats.PdfFixedRenderer()
         print('Compactando: ', file.name, '....')
-        with open(file, 'rb') as pdf_stream:
+        with open(file, 'rb') as pdf_stream: #open with write binary
                 aspose_image = renderer.save_pdf_as_images(pdf_stream, pdf_read_options)
 
-        for i in range(0, len(aspose_image)):
+        for i in range(0, len(aspose_image)): # loop for all pages in PDF, and rewrite 
             page_setup = self.builder.page_setup
             self.set_pdf_page_size(page_setup, max_width, max_height) #set the image size in current page
 
             page_image = self.builder.insert_image(aspose_image[i])
 
             self.set_pdf_page_size(page_setup, page_image.width, page_image.height) 
+            #clean all margins from image
             page_setup.top_margin = 0
             page_setup.left_margin = 0
             page_setup.bottom_margin = 0

@@ -26,6 +26,7 @@ class PDFCompression(ValidationData, Compress):
 
     @property
     def get_compartives(self):
+        """ return files sizes compartives before and after """
         result = []
         for build in self.comparative:
             total = build[1] 
@@ -33,8 +34,6 @@ class PDFCompression(ValidationData, Compress):
             perct = round((dif * 100) / total , 3)
             result.append(f'O arquivo {build[0]} foi de {build[1]} kb para {build[2]} kb, redução de {perct}%')
         return result
-
-        
 
 
     def build(self,
@@ -187,22 +186,6 @@ class PDFCompression(ValidationData, Compress):
         else:
             print(f'Compressão concluida com sucesso, {len(self.files_to_process)} de arquivos processados')    
 
-if __name__ == '__main__':
-
-    my_path = Path(__file__).parent.joinpath('pdfs')
-
-
-
-    with PDFCompression() as compressor:
-        compressor.build_all(
-            files_dir=my_path,
-            name='teste-all',
-            dir_to_save= my_path.parent / 'teste-results',
-            quality_per_image=20,
-            max_heigth=1500,
-            max_width=1500
-        )
-        print(compressor.get_compartives)
 
 
 
